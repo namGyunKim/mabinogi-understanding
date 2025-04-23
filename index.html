@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>길드 가입 신청</title>
+    <title>길드 가입 신청 (디스코드)</title>
     <style>
-        /* CSS 스타일은 이전과 동일하게 유지됩니다 */
+        /* CSS 스타일은 원본과 동일하게 유지됩니다 */
         body {
             font-family: sans-serif;
             line-height: 1.6;
@@ -42,11 +42,11 @@
             margin-bottom: 15px;
             border: 1px solid #ccc;
             border-radius: 4px;
-            box-sizing: border-box; /* 패딩 포함해서 너비 계산 */
+            box-sizing: border-box;
         }
         textarea {
             height: 100px;
-            resize: vertical; /* 세로 크기만 조절 가능 */
+            resize: vertical;
         }
         .rules-agreement {
             margin-bottom: 20px;
@@ -57,7 +57,7 @@
         }
         .rules-agreement label {
             font-weight: normal;
-            display: flex; /* 체크박스와 텍스트 정렬 */
+            display: flex;
             align-items: center;
         }
         .rules-agreement input[type="checkbox"] {
@@ -75,24 +75,30 @@
             font-size: 16px;
             transition: background-color 0.3s ease;
         }
-        button:hover {
+        button:hover:not(:disabled) { /* 비활성화 상태 아닐 때만 hover 효과 */
             background-color: #4cae4c;
         }
-        .notice {
-            margin-top: 20px;
-            font-size: 0.9em;
-            color: #777;
+        button:disabled { /* 전송 중 비활성화 스타일 */
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status-message { /* 전송 상태 메시지 스타일 */
+            margin-top: 15px;
             text-align: center;
+            font-weight: bold;
+        }
+        .status-message.success {
+            color: green;
+        }
+        .status-message.error {
+            color: red;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>길드 가입 신청</h1>
-        <form id="guild-application-form"
-              action="mailto:skarbs01@naver.com"
-              method="post"
-              enctype="text/plain">
+        <form id="guild-application-form">
             <div>
                 <label for="character-name">캐릭터명 / 닉네임:</label>
                 <input type="text" id="character-name" name="character_name" placeholder="게임 내 캐릭터명 또는 닉네임" required>
@@ -114,14 +120,124 @@
                 </label>
             </div>
 
-            <button type="submit">신청서 제출 및 메일 작성</button>
+            <button type="submit" id="submit-button">신청서 제출 (디스코드)</button>
         </form>
-        <p class="notice">
-            * 제출 버튼을 누르면 사용자의 기본 이메일 프로그램이 열립니다.<br>
-            * 이메일 프로그램에서 직접 '보내기'를 눌러야 신청서가 전송됩니다.<br>
-            * 이메일 프로그램이 설정되어 있지 않으면 작동하지 않을 수 있습니다.
-        </p>
-    </div>
+        <div id="status-message" class="status-message"></div>
+        </div>
 
-    </body>
+    <script>
+      // ================================================================
+      // 디스코드 웹훅 연동 스크립트
+      // ================================================================
+
+      // 중요: 아래 변수에 실제 디스코드 웹훅 URL을 입력하세요.
+      const webhookUrl = 'https://discord.com/api/webhooks/1364502278958092388/2B7k4chVb08HX_o6w5LTq8kyhkRqIYmOpn3UKe62CEU62Y55K3aUcO3NDSv2lCJy6yxf';
+
+      const form = document.getElementById('guild-application-form');
+      const submitButton = document.getElementById('submit-button');
+      const statusMessage = document.getElementById('status-message');
+
+      form.addEventListener('submit', function(event) {
+        event.preventDefault(); // 폼의 기본 제출 동작(페이지 새로고침) 방지
+
+        // 0. 전송 상태 초기화 및 버튼 비활성화
+        statusMessage.textContent = '전송 중...';
+        statusMessage.className = 'status-message'; // 기본 클래스로 초기화
+        submitButton.disabled = true; // 여러 번 클릭 방지
+
+        // 1. 폼 데이터 가져오기
+        const characterName = document.getElementById('character-name').value.trim();
+        const contactInfo = document.getElementById('contact-info').value.trim();
+        const introduction = document.getElementById('introduction').value.trim();
+        const rulesAgree = document.getElementById('rules-agree').checked;
+
+        // 2. 유효성 검사 (규칙 동의 필수)
+        if (!rulesAgree) {
+          statusMessage.textContent = '길드 규칙에 동의해야 합니다.';
+          statusMessage.classList.add('error');
+          submitButton.disabled = false; // 버튼 다시 활성화
+          return; // 전송 중단
+        }
+        if (!characterName || !introduction) {
+            statusMessage.textContent = '캐릭터명과 자기소개는 필수 항목입니다.';
+            statusMessage.classList.add('error');
+            submitButton.disabled = false;
+            return;
+        }
+
+
+        // 3. 디스코드 웹훅 페이로드(전송할 데이터) 구성
+        //    embeds 형식을 사용하면 디스코드에서 더 보기 좋게 표시됩니다.
+        const payload = {
+          username: "길드 가입 신청봇", // 웹훅 메시지에 표시될 이름 (선택 사항)
+          avatar_url: "", // 웹훅 메시지에 표시될 프로필 사진 URL (선택 사항)
+          embeds: [{
+            title: "✨ 새로운 길드 가입 신청",
+            color: 5814783, // 16진수 색상 코드 (예: 녹색 계열)
+            fields: [
+              {
+                name: "👤 캐릭터명",
+                value: characterName,
+                inline: true // 가능하면 옆으로 표시
+              },
+              {
+                name: "📞 연락처",
+                value: contactInfo || "*입력 없음*", // 입력 안했을 경우 대체 텍스트
+                inline: true
+              },
+              {
+                name: "📝 자기소개",
+                value: introduction
+              }
+            ],
+            footer: {
+              text: "규칙 동의 완료 ✅" // 규칙 동의 여부 표시
+            },
+            timestamp: new Date().toISOString() // 신청 시간 표시
+          }]
+        };
+
+        // 4. fetch API를 사용하여 웹훅 URL로 POST 요청 보내기
+        fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload), // JavaScript 객체를 JSON 문자열로 변환
+        })
+        .then(response => {
+          if (response.ok) {
+            // 성공 시
+            statusMessage.textContent = '✅ 신청서가 성공적으로 제출되었습니다!';
+            statusMessage.classList.add('success');
+            form.reset(); // 폼 필드 초기화
+          } else {
+            // 실패 시 (디스코드 서버 응답 오류)
+            statusMessage.textContent = `❌ 신청서 제출에 실패했습니다. (오류: ${response.status})`;
+            statusMessage.classList.add('error');
+            console.error('Webhook error:', response.status, response.statusText);
+          }
+        })
+        .catch(error => {
+          // 실패 시 (네트워크 오류 등)
+          statusMessage.textContent = '❌ 신청서 제출 중 오류가 발생했습니다.';
+          statusMessage.classList.add('error');
+          console.error('Fetch error:', error);
+        })
+        .finally(() => {
+          // 성공/실패 여부와 관계없이 버튼 다시 활성화
+          submitButton.disabled = false;
+        });
+      });
+
+      // 웹훅 URL이 설정되지 않았을 경우 경고
+      if (webhookUrl === '여기에_실제_디스코드_웹훅_URL을_입력하세요') {
+          console.warn("경고: 스크립트 내의 webhookUrl 변수에 실제 디스코드 웹훅 URL을 입력해야 합니다.");
+          statusMessage.textContent = '⚠️ 웹훅 URL이 설정되지 않았습니다. 관리자에게 문의하세요.';
+          statusMessage.classList.add('error');
+          submitButton.disabled = true; // URL 없으면 제출 불가
+      }
+
+    </script>
+</body>
 </html>
