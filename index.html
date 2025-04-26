@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>길드 가입 신청 (디스코드)</title>
+    <title>결계 시간 자동 알리미 (디스코드)</title>
     <style>
-        /* CSS 스타일은 원본과 동일하게 유지됩니다 */
+        /* CSS 스타일은 이전과 동일하게 유지됩니다 */
         body {
             font-family: sans-serif;
             line-height: 1.6;
@@ -15,6 +15,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            text-align: center;
         }
         .container {
             background-color: #fff;
@@ -25,66 +26,11 @@
             width: 100%;
         }
         h1 {
-            text-align: center;
             color: #333;
             margin-bottom: 20px;
         }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-        input[type="text"],
-        textarea {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        textarea {
-            height: 100px;
-            resize: vertical;
-        }
-        .rules-agreement {
-            margin-bottom: 20px;
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 4px;
-            border: 1px solid #eee;
-        }
-        .rules-agreement label {
-            font-weight: normal;
-            display: flex;
-            align-items: center;
-        }
-        .rules-agreement input[type="checkbox"] {
-            margin-right: 10px;
-        }
-        button {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s ease;
-        }
-        button:hover:not(:disabled) { /* 비활성화 상태 아닐 때만 hover 효과 */
-            background-color: #4cae4c;
-        }
-        button:disabled { /* 전송 중 비활성화 스타일 */
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .status-message { /* 전송 상태 메시지 스타일 */
+        .status-message {
             margin-top: 15px;
-            text-align: center;
             font-weight: bold;
         }
         .status-message.success {
@@ -93,150 +39,164 @@
         .status-message.error {
             color: red;
         }
+        .warning-message {
+            color: orange;
+            font-weight: bold;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 4px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>길드 가입 신청</h1>
-        <form id="guild-application-form">
-            <div>
-                <label for="character-name">캐릭터명 / 닉네임:</label>
-                <input type="text" id="character-name" name="character_name" placeholder="게임 내 캐릭터명 또는 닉네임" required>
-            </div>
-
-            <div>
-                <label for="contact-info">연락처 (선택):</label>
-                <input type="text" id="contact-info" name="contact_info" placeholder="예: 디스코드 ID (user#1234)">
-            </div>
-
-            <div>
-                <label for="introduction">가입 신청 이유 / 자기소개:</label>
-                <textarea id="introduction" name="introduction" placeholder="간단한 자기소개와 길드에 가입하려는 이유를 적어주세요." required></textarea>
-            </div>
-
-            <div class="rules-agreement">
-                <label for="rules-agree">
-                    <input type="checkbox" id="rules-agree" name="rules_agree" value="agreed" required> 길드 규칙을 모두 확인했으며, 이에 동의합니다.
-                </label>
-            </div>
-
-            <button type="submit" id="submit-button">신청서 제출 (디스코드)</button>
-        </form>
-        <div id="status-message" class="status-message"></div>
+        <h1>결계 시간 자동 알리미</h1>
+        <div id="status-message" class="status-message">알리미 초기화 중...</div>
+        <div id="warning-message-area"></div>
+        <div style="margin-top: 20px; font-size: 0.9em; color: #555;">
+            (이 페이지가 열려 있는 동안 3시간 간격으로 결계 알림을 보냅니다)
         </div>
+    </div>
 
     <script>
-      // ================================================================
-      // 디스코드 웹훅 연동 스크립트
-      // ================================================================
+    // ================================================================
+    // 디스코드 웹훅 시간 기반 자동 알림 스크립트
+    // ================================================================
 
-      // 중요: 아래 변수에 실제 디스코드 웹훅 URL을 입력하세요.
-      const webhookUrl = 'https://discord.com/api/webhooks/1364502278958092388/2B7k4chVb08HX_o6w5LTq8kyhkRqIYmOpn3UKe62CEU62Y55K3aUcO3NDSv2lCJy6yxf';
+    // 중요: 아래 변수에 실제 디스코드 웹훅 URL을 입력하세요.
+    // 요청하신 새 URL로 수정되었습니다.
+    const webhookUrl = 'https://discord.com/api/webhooks/1365573455625457684/a_dtCdDSQxu-7HVQbgCLBRIx83m75raud-edjcRtFP4H7k-XnhPmEmmserG0T4k2DMny';
 
-      const form = document.getElementById('guild-application-form');
-      const submitButton = document.getElementById('submit-button');
-      const statusMessage = document.getElementById('status-message');
+    const statusMessage = document.getElementById('status-message');
+    const warningMessageArea = document.getElementById('warning-message-area');
 
-      form.addEventListener('submit', function(event) {
-        event.preventDefault(); // 폼의 기본 제출 동작(페이지 새로고침) 방지
+    // 웹훅 URL 유효성 기본 검사
+    if (!webhookUrl || !webhookUrl.startsWith('https://discord.com/api/webhooks/') || webhookUrl.includes('YOUR_WEBHOOK_URL_HERE')) {
+         console.error("오류: 유효한 디스코드 웹훅 URL이 설정되지 않았습니다.");
+         statusMessage.textContent = '⚠️ 유효한 웹훅 URL이 설정되지 않았습니다. 스크립트의 webhookUrl 변수를 확인하세요.';
+         statusMessage.className = 'status-message error';
+    } else {
+        console.log("웹훅 URL 확인됨. 시간 기반 알림 스케줄러를 시작합니다.");
+        statusMessage.textContent = '결계 시간 알림이 활성화되었습니다. (매 분 시간 확인)';
+        statusMessage.className = 'status-message success';
 
-        // 0. 전송 상태 초기화 및 버튼 비활성화
-        statusMessage.textContent = '전송 중...';
-        statusMessage.className = 'status-message'; // 기본 클래스로 초기화
-        submitButton.disabled = true; // 여러 번 클릭 방지
+        // 브라우저 기반 알림의 한계에 대한 경고 메시지 표시
+        const warningDiv = document.createElement('div');
+        warningDiv.className = 'warning-message';
+        warningDiv.innerHTML = `
+            <strong>⚠️ 중요 안내:</strong><br>
+            이 알림 기능은 현재 웹 브라우저 탭이 <strong>열려 있는 동안에만</strong> 작동합니다.<br>
+            브라우저 탭을 닫거나, 컴퓨터 절전 모드 진입, 또는 컴퓨터를 종료하면 알림 전송이 중단됩니다.<br>
+            안정적인 24시간 자동 알림이 필요하다면, 서버에서 실행되는 프로그램이나 디스코드 봇을 사용하는 것이 좋습니다.
+        `;
+        warningMessageArea.appendChild(warningDiv);
 
-        // 1. 폼 데이터 가져오기
-        const characterName = document.getElementById('character-name').value.trim();
-        const contactInfo = document.getElementById('contact-info').value.trim();
-        const introduction = document.getElementById('introduction').value.trim();
-        const rulesAgree = document.getElementById('rules-agree').checked;
+        // 알림 스케줄러 시작
+        initializeScheduler();
+    }
 
-        // 2. 유효성 검사 (규칙 동의 필수)
-        if (!rulesAgree) {
-          statusMessage.textContent = '길드 규칙에 동의해야 합니다.';
-          statusMessage.classList.add('error');
-          submitButton.disabled = false; // 버튼 다시 활성화
-          return; // 전송 중단
+    // 디스코드에 메시지를 보내는 함수
+    async function sendDiscordNotification(minutesRemaining) {
+        const now = new Date();
+        const notificationHour = now.getHours();
+        const barrierHour = (notificationHour + 1) % 24;
+        const message = `⏰ ${barrierHour}시 결계 시작 ${minutesRemaining}분 전입니다! 준비하세요!`;
+
+        console.log(`[${new Date().toLocaleTimeString()}] 전송 시도: ${message}`);
+
+        const payload = {
+            username: "결계 알리미",
+            avatar_url: "",
+            content: message,
+            /* // Embeds 예시
+            embeds: [{
+                title: `⏰ 결계 임박 (${barrierHour}:00)`,
+                description: `결계 시작 **${minutesRemaining}분 전**입니다!`,
+                color: minutesRemaining === 10 ? 15105570 : 15844367,
+                footer: { text: "곧 시작됩니다!" },
+                timestamp: new Date().toISOString()
+            }]
+            */
+        };
+
+        try {
+            const response = await fetch(webhookUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (response.ok) {
+                console.log(`[${new Date().toLocaleTimeString()}] 메시지 전송 성공: ${minutesRemaining}분 전 알림`);
+                statusMessage.textContent = `[${new Date().toLocaleTimeString()}] ${barrierHour}시 결계 ${minutesRemaining}분 전 알림 전송 완료.`;
+                statusMessage.className = 'status-message success';
+            } else {
+                let errorText = `HTTP 상태 코드: ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    errorText += ` - ${JSON.stringify(errorData)}`;
+                } catch (e) {
+                    errorText += ` - ${response.statusText}`;
+                }
+                 console.error(`[${new Date().toLocaleTimeString()}] 디스코드 웹훅 전송 실패: ${errorText}`);
+                 statusMessage.textContent = `[${new Date().toLocaleTimeString()}] 알림 전송 실패 (${response.status}). 개발자 콘솔(F12) 확인.`;
+                 statusMessage.className = 'status-message error';
+            }
+        } catch (error) {
+            console.error(`[${new Date().toLocaleTimeString()}] Fetch 네트워크 오류 발생:`, error);
+            statusMessage.textContent = `[${new Date().toLocaleTimeString()}] 알림 전송 중 네트워크 오류 발생. 인터넷 연결 및 웹훅 URL 확인.`;
+            statusMessage.className = 'status-message error';
         }
-        if (!characterName || !introduction) {
-            statusMessage.textContent = '캐릭터명과 자기소개는 필수 항목입니다.';
-            statusMessage.classList.add('error');
-            submitButton.disabled = false;
+    }
+
+    // 마지막으로 알림 보낸 시간(분 단위) 기록
+    let lastNotificationSentMinute = -1;
+
+    // 시간을 확인하고 필요시 알림을 보내는 함수
+    function checkTimeAndNotify() {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentSecond = now.getSeconds();
+
+        if (currentSecond !== 0) {
+             return;
+        }
+
+        if (currentMinute === lastNotificationSentMinute) {
             return;
         }
 
+        // 결계 시간: 00, 03, 06, 09, 12, 15, 18, 21시
+        // 알림 시간: 10분 전 (XX:50), 5분 전 (XX:55)
+        // 해당 시간 (XX): 23, 02, 05, 08, 11, 14, 17, 20 시
+        if (currentHour % 3 === 2) {
+            if (currentMinute === 50) {
+                console.log(`[${now.toLocaleTimeString()}] 10분 전 알림 시간 감지 (${currentHour}:${currentMinute})`);
+                sendDiscordNotification(10);
+                lastNotificationSentMinute = currentMinute;
+            } else if (currentMinute === 55) {
+                console.log(`[${now.toLocaleTimeString()}] 5분 전 알림 시간 감지 (${currentHour}:${currentMinute})`);
+                sendDiscordNotification(5);
+                lastNotificationSentMinute = currentMinute;
+            } else {
+                 lastNotificationSentMinute = -1;
+            }
+        } else {
+            lastNotificationSentMinute = -1;
+        }
+    }
 
-        // 3. 디스코드 웹훅 페이로드(전송할 데이터) 구성
-        //    embeds 형식을 사용하면 디스코드에서 더 보기 좋게 표시됩니다.
-        const payload = {
-          username: "길드 가입 신청봇", // 웹훅 메시지에 표시될 이름 (선택 사항)
-          avatar_url: "", // 웹훅 메시지에 표시될 프로필 사진 URL (선택 사항)
-          embeds: [{
-            title: "✨ 새로운 길드 가입 신청",
-            color: 5814783, // 16진수 색상 코드 (예: 녹색 계열)
-            fields: [
-              {
-                name: "👤 캐릭터명",
-                value: characterName,
-                inline: true // 가능하면 옆으로 표시
-              },
-              {
-                name: "📞 연락처",
-                value: contactInfo || "*입력 없음*", // 입력 안했을 경우 대체 텍스트
-                inline: true
-              },
-              {
-                name: "📝 자기소개",
-                value: introduction
-              }
-            ],
-            footer: {
-              text: "규칙 동의 완료 ✅" // 규칙 동의 여부 표시
-            },
-            timestamp: new Date().toISOString() // 신청 시간 표시
-          }]
-        };
-
-        // 4. fetch API를 사용하여 웹훅 URL로 POST 요청 보내기
-        fetch(webhookUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload), // JavaScript 객체를 JSON 문자열로 변환
-        })
-        .then(response => {
-          if (response.ok) {
-            // 성공 시
-            statusMessage.textContent = '✅ 신청서가 성공적으로 제출되었습니다!';
-            statusMessage.classList.add('success');
-            form.reset(); // 폼 필드 초기화
-          } else {
-            // 실패 시 (디스코드 서버 응답 오류)
-            statusMessage.textContent = `❌ 신청서 제출에 실패했습니다. (오류: ${response.status})`;
-            statusMessage.classList.add('error');
-            console.error('Webhook error:', response.status, response.statusText);
-          }
-        })
-        .catch(error => {
-          // 실패 시 (네트워크 오류 등)
-          statusMessage.textContent = '❌ 신청서 제출 중 오류가 발생했습니다.';
-          statusMessage.classList.add('error');
-          console.error('Fetch error:', error);
-        })
-        .finally(() => {
-          // 성공/실패 여부와 관계없이 버튼 다시 활성화
-          submitButton.disabled = false;
-        });
-      });
-
-      // 웹훅 URL이 설정되지 않았을 경우 경고
-      if (webhookUrl === '여기에_실제_디스코드_웹훅_URL을_입력하세요') {
-          console.warn("경고: 스크립트 내의 webhookUrl 변수에 실제 디스코드 웹훅 URL을 입력해야 합니다.");
-          statusMessage.textContent = '⚠️ 웹훅 URL이 설정되지 않았습니다. 관리자에게 문의하세요.';
-          statusMessage.classList.add('error');
-          submitButton.disabled = true; // URL 없으면 제출 불가
-      }
+    // 스케줄러 초기화 함수
+    function initializeScheduler() {
+        console.log("결계 알림 스케줄러 시작. 매 초 시간 확인 (정확한 분 체크 위함).");
+        setInterval(checkTimeAndNotify, 1000); // 1초 = 1000ms
+    }
 
     </script>
 </body>
